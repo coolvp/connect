@@ -1,20 +1,71 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "connectform", "connectform\connectform.csproj", "{2FEBAF5E-750F-4D89-A90E-9306186E1637}"
-EndProject
-Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|x86 = Debug|x86
-		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2FEBAF5E-750F-4D89-A90E-9306186E1637}.Debug|x86.ActiveCfg = Debug|x86
-		{2FEBAF5E-750F-4D89-A90E-9306186E1637}.Debug|x86.Build.0 = Debug|x86
-		{2FEBAF5E-750F-4D89-A90E-9306186E1637}.Release|x86.ActiveCfg = Release|x86
-		{2FEBAF5E-750F-4D89-A90E-9306186E1637}.Release|x86.Build.0 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
-EndGlobal
+using System;
+using System.Data;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+
+namespace connectform
+{
+    public partial class Form1 : Form
+    {
+        // Connection to SQL Server
+        SqlConnection conn = new SqlConnection("Data Source=.\\SQLEXPRESS;Initial Catalog=studentdb;Integrated Security=True");
+
+        public Form1()
+        {
+            InitializeComponent();
+            this.StartPosition = FormStartPosition.CenterScreen; // center form
+        }
+
+        // Load data into DataGridView
+        void LoadData()
+        {
+            try
+            {
+                SqlDataAdapter da = new SqlDataAdapter("SELECT * FROM stud", conn);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+                dataGridView1.DataSource = dt;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        // Load data when form opens
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            LoadData();
+        }
+
+        // Insert record
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(textBox1.Text) || string.IsNullOrWhiteSpace(textBox2.Text))
+            {
+                MessageBox.Show("Please enter Name and Age");
+                return;
+            }
+
+            try
+            {
+                conn.Open();
+                string query = "INSERT INTO stud (Name, Age) VALUES (@Name,@Age)";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@Name", textBox1.Text);
+                cmd.Parameters.AddWithValue("@Age", textBox2.Text);
+                cmd.ExecuteNonQuery();
+                conn.Close();
+
+                MessageBox.Show("Record Inserted");
+                LoadData(); // Refresh DataGridView
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                if (conn.State == ConnectionState.Open)
+                    conn.Close();
+            }
+        }
+    }
+}
